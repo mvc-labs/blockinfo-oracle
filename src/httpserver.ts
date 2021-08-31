@@ -14,8 +14,6 @@ const allowCors = function (req, res, next) {
 };
 app.use(allowCors)
 
-app.use(express.json({limit: '1mb'}))
-
 const server: any = {}
 
 server.app = app
@@ -39,12 +37,10 @@ function toBufferLE(num: BigInt, width: number) {
 }
 
 server.start = function (config) {
-    //app.use(express.json()) // for parsing application/json app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 
-    /*/ ip whitelist
-    if (config.whitelist !== undefined) {
-        app.use(ipfilter(config.whitelist, { mode: 'allow' }))
-    }*/
+    if (!process.env.RABIN_P || !process.env.RABIN_Q) {
+        throw Error('need rabin private key in env')
+    }
 
     const rabinPrivateKey = {
         p: BigInt(process.env.RABIN_P),
@@ -59,7 +55,8 @@ server.start = function (config) {
         ).timeout(TIMEOUT)
         if (blockRes.status !== 200 || blockRes.body.code !== 0) {
             console.log('getBlockHeight failed: ',res, res.body)
-            return false
+            res.json({code: 1, msg: 'getBlockHeight failed'})
+            return
         }
         const blockData = blockRes.body.data
         const blockHeight = blockData.blocks - 1
