@@ -92,7 +92,7 @@ server.start = function (config) {
                 }
             }
         }
-        res.json({ code: 0, data })
+        res.json(data)
     })
 
     httpserver = app.listen(config.port, config.ip, function () {
