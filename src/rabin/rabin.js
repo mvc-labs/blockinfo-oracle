@@ -56,7 +56,7 @@ function powerMod(base, exponent, modulus) {
 }
 
 /*function rabinHashBytes(bytes) {
-    hBytes = crypto.createHash('sha256').update(bytes).digest();
+    let hBytes = crypto.createHash('sha256').update(bytes).digest();
     let idx = hBytes.byteLength / 2;
     let hl = crypto.createHash('sha256').update(hBytes.slice(0, idx)).digest();
     let hr = crypto.createHash('sha256').update(hBytes.slice(idx, hBytes.byteLength)).digest();
