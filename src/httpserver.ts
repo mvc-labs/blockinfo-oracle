@@ -65,6 +65,7 @@ async function getWocBlockInfo() {
     }
 
     blockRes.body.bestBlockHash = blockRes.body.bestblockhash
+    blockRes.body.medianTime = blockRes.body.mediantime
     return blockRes.body
 }
 
@@ -105,10 +106,12 @@ server.start = function (config) {
         if (req.query.nonce) {
             userdata = Buffer.from(req.query.nonce, 'hex')
         }
+        const blockHash = Buffer.from(blockData.bestBlockHash, 'hex')
+        blockHash.reverse()
         const rabinMsg = Buffer.concat([
             getUInt32Buf(blockData.blocks),
             getUInt32Buf(blockData.medianTime),
-            Buffer.from(blockData.bestBlockHash, 'hex'), // block hash
+            blockHash, // block hash
             Buffer.from('426974636f696e205356', 'hex'),
             userdata,
         ])
