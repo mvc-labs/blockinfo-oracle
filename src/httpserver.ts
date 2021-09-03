@@ -20,7 +20,7 @@ server.app = app
 
 let httpserver
 
-const TIMEOUT = 120000 // 120s
+const TIMEOUT = 30000 // 30s
 const PUBKEY_LEN = 384
 
 function getUInt32Buf(amount: number) {
@@ -34,6 +34,50 @@ function toBufferLE(num: BigInt, width: number) {
     const buffer = Buffer.from(hex.padStart(width * 2, '0').slice(0, width * 2), 'hex');
     buffer.reverse();
     return buffer;
+}
+
+async function getMetaSvBlockInfo() {
+    const blockRes = await request.get(`https://apiv2.metasv.com/block/info`).timeout(TIMEOUT)
+    if (blockRes.status !== 200) {
+        return false
+    }
+    return blockRes.body
+}
+
+async function getSensibleBlockInfo() {
+    const blockRes = await request.get(
+        `https://api.sensiblequery.com/blockchain/info`
+    ).timeout(TIMEOUT)
+    if (blockRes.status !== 200 || blockRes.body.code !== 0) {
+        return false
+    }
+    const blockData = blockRes.body.data
+    blockData.blocks = blockData.blocks - 1
+    return blockData
+}
+
+async function getWocBlockInfo() {
+    const blockRes = await request.get(
+        `https://api.whatsonchain.com/v1/bsv/main/chain/info`
+    ).timeout(TIMEOUT)
+    if (blockRes.status !== 200) {
+        return false
+    }
+
+    blockRes.body.bestBlockHash = blockRes.body.bestblockhash
+    return blockRes.body
+}
+
+async function getBlockInfo(source: string) {
+    if (source === 'sensible') {
+        return getSensibleBlockInfo()
+    } else if (source === 'metasv') {
+        return getMetaSvBlockInfo()
+    } else if (source === 'woc') {
+        return getWocBlockInfo()
+    } else {
+        throw Error('wrong source config')
+    }
 }
 
 server.start = function (config) {
@@ -50,23 +94,19 @@ server.start = function (config) {
     const rabinPubKeyhex = toBufferLE(rabinPubKey, PUBKEY_LEN).toString('hex')
 
     app.get('/', async function(req, res) {
-        const blockRes = await request.get(
-            `https://api.sensiblequery.com/blockchain/info`
-        ).timeout(TIMEOUT)
-        if (blockRes.status !== 200 || blockRes.body.code !== 0) {
+        const blockData = await getBlockInfo(config.source)
+        if (blockData === false) {
             console.log('getBlockHeight failed: ',res, res.body)
             res.json({code: 1, msg: 'getBlockHeight failed'})
             return
         }
-        const blockData = blockRes.body.data
-        const blockHeight = blockData.blocks - 1
 
         let userdata = Buffer.alloc(0)
         if (req.query.nonce) {
             userdata = Buffer.from(req.query.nonce, 'hex')
         }
         const rabinMsg = Buffer.concat([
-            getUInt32Buf(blockHeight),
+            getUInt32Buf(blockData.blocks),
             getUInt32Buf(blockData.medianTime),
             Buffer.from(blockData.bestBlockHash, 'hex'), // block hash
             Buffer.from('426974636f696e205356', 'hex'),
@@ -79,7 +119,7 @@ server.start = function (config) {
 
         const data = {
             "chain":"Bitcoin SV",
-            "height": blockHeight,
+            "height": blockData.blocks,
             "median_time_past": blockData.medianTime, 
             "block": blockData.bestBlockHash,
             "timestamp": Math.floor(new Date().getTime() / 1000),
@@ -96,7 +136,7 @@ server.start = function (config) {
     })
 
     httpserver = app.listen(config.port, config.ip, function () {
-        console.log("start at listen %s:%s", config.ip, config.port)
+        console.log("start at listen %s, %s:%s", config.source, config.ip, config.port)
     })
 }
 
