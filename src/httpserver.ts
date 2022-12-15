@@ -37,45 +37,16 @@ function toBufferLE(num: BigInt, width: number) {
 }
 
 async function getMetaSvBlockInfo() {
-    const blockRes = await request.get(`https://apiv2.metasv.com/block/info`).timeout(TIMEOUT)
+    const blockRes = await request.get(`https://api-mvc-testnet.metasv.com/block/info`).timeout(TIMEOUT)
     if (blockRes.status !== 200) {
         return false
     }
-    return blockRes.body
-}
-
-async function getSensibleBlockInfo() {
-    const blockRes = await request.get(
-        `https://api.sensiblequery.com/blockchain/info`
-    ).timeout(TIMEOUT)
-    if (blockRes.status !== 200 || blockRes.body.code !== 0) {
-        return false
-    }
-    const blockData = blockRes.body.data
-    blockData.blocks = blockData.blocks - 1
-    return blockData
-}
-
-async function getWocBlockInfo() {
-    const blockRes = await request.get(
-        `https://api.whatsonchain.com/v1/bsv/main/chain/info`
-    ).timeout(TIMEOUT)
-    if (blockRes.status !== 200) {
-        return false
-    }
-
-    blockRes.body.bestBlockHash = blockRes.body.bestblockhash
-    blockRes.body.medianTime = blockRes.body.mediantime
     return blockRes.body
 }
 
 async function getBlockInfo(source: string) {
-    if (source === 'sensible') {
-        return getSensibleBlockInfo()
-    } else if (source === 'metasv') {
+    if (source === 'metasv') {
         return getMetaSvBlockInfo()
-    } else if (source === 'woc') {
-        return getWocBlockInfo()
     } else {
         throw Error('wrong source config')
     }
@@ -112,7 +83,7 @@ server.start = function (config) {
             getUInt32Buf(blockData.blocks),
             getUInt32Buf(blockData.medianTime),
             blockHash, // block hash
-            Buffer.from('426974636f696e205356', 'hex'),
+            Buffer.from('4d5643', 'hex'),
             userdata,
         ])
 
