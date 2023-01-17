@@ -37,16 +37,18 @@ function toBufferLE(num: BigInt, width: number) {
 }
 
 async function getMetaSvBlockInfo() {
-    const blockRes = await request.get(`https://api-mvc-testnet.metasv.com/block/info`).timeout(TIMEOUT)
+    const blockRes = await request.get(`https://api-mvc-testnet.metasv.com/block`).timeout(TIMEOUT)
     if (blockRes.status !== 200) {
         return false
     }
-    return blockRes.body
+    return blockRes.body[0]
 }
 
 async function getBlockInfo(source: string) {
     if (source === 'metasv') {
-        return getMetaSvBlockInfo()
+        const res: any = await getMetaSvBlockInfo()
+        res.timestamp = Math.floor(res.timestamp / 1000)
+        return res
     } else {
         throw Error('wrong source config')
     }
@@ -80,7 +82,8 @@ server.start = function (config) {
         const blockHash = Buffer.from(blockData.bestBlockHash, 'hex')
         blockHash.reverse()
         const rabinMsg = Buffer.concat([
-            getUInt32Buf(blockData.blocks),
+            getUInt32Buf(blockData.height),
+            getUInt32Buf(blockData.timestamp),
             getUInt32Buf(blockData.medianTime),
             blockHash, // block hash
             Buffer.from('4d5643', 'hex'),
@@ -92,11 +95,11 @@ server.start = function (config) {
         const rabinPadding = Buffer.alloc(rabinSignResult.paddingByteCount, 0).toString('hex')
 
         const data = {
-            "chain":"Bitcoin SV",
+            "chain":"MVC",
             "height": blockData.blocks,
             "median_time_past": blockData.medianTime, 
             "block": blockData.bestBlockHash,
-            "timestamp": Math.floor(new Date().getTime() / 1000),
+            "timestamp": blockData.timestamp,
             "digest": rabinMsg.toString('hex'),
             "signatures":{
                 "rabin":{
