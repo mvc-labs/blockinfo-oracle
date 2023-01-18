@@ -48,6 +48,7 @@ async function getBlockInfo(source: string) {
     if (source === 'metasv') {
         const res: any = await getMetaSvBlockInfo()
         res.timestamp = Math.floor(res.timestamp / 1000)
+        res.medianTime = Math.floor(res.medianTime / 1000)
         return res
     } else {
         throw Error('wrong source config')
@@ -79,7 +80,7 @@ server.start = function (config) {
         if (req.query.nonce) {
             userdata = Buffer.from(req.query.nonce, 'hex')
         }
-        const blockHash = Buffer.from(blockData.bestBlockHash, 'hex')
+        const blockHash = Buffer.from(blockData.blockHash, 'hex')
         blockHash.reverse()
         const rabinMsg = Buffer.concat([
             getUInt32Buf(blockData.height),
@@ -98,7 +99,7 @@ server.start = function (config) {
             "chain":"MVC",
             "height": blockData.blocks,
             "median_time_past": blockData.medianTime, 
-            "block": blockData.bestBlockHash,
+            "block": blockData.blockHash,
             "timestamp": blockData.timestamp,
             "digest": rabinMsg.toString('hex'),
             "signatures":{
