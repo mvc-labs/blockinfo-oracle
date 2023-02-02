@@ -100,7 +100,8 @@ server.start = function (config) {
             "height": blockData.blocks,
             "median_time_past": blockData.medianTime, 
             "block": blockData.blockHash,
-            "timestamp": blockData.timestamp,
+            "block_timestamp": blockData.timestamp,
+            "timestamp": Math.floor(Date.now() / 1000),
             "digest": rabinMsg.toString('hex'),
             "signatures":{
                 "rabin":{
