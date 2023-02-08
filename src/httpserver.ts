@@ -97,7 +97,7 @@ server.start = function (config) {
 
         const data = {
             "chain":"MVC",
-            "height": blockData.blocks,
+            "height": blockData.height,
             "median_time_past": blockData.medianTime, 
             "block": blockData.blockHash,
             "block_timestamp": blockData.timestamp,
