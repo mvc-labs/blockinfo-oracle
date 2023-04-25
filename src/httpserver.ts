@@ -36,8 +36,8 @@ function toBufferLE(num: BigInt, width: number) {
     return buffer;
 }
 
-async function getMetaSvBlockInfo() {
-    const blockRes = await request.get(`https://api-mvc.metasv.com/block`).timeout(TIMEOUT)
+async function getMetasvBlockInfo() {
+    const blockRes = await request.get(`https://mainnet.mvcapi.com/block`).timeout(TIMEOUT)
     if (blockRes.status !== 200) {
         return false
     }
@@ -45,8 +45,8 @@ async function getMetaSvBlockInfo() {
 }
 
 async function getBlockInfo(source: string) {
-    if (source === 'metasv') {
-        const res: any = await getMetaSvBlockInfo()
+    if (source === 'metasv' || source == 'mvcapi') {
+        const res: any = await getMetasvBlockInfo()
         res.timestamp = Math.floor(res.timestamp / 1000)
         res.medianTime = Math.floor((res.medianTime || 0) / 1000)
         return res
